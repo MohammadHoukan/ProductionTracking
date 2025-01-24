@@ -5,19 +5,19 @@ An inclusive solution using **Google Apps Script** and **Google Sheets** to stre
 ---
 
 ## Table of Contents
-1. [Project Goal](#project-goal)  
-2. [Overview](#overview)  
-3. [Features](#features)  
-4. [Technology Stack](#technology-stack)  
-5. [Prerequisites](#prerequisites)  
-6. [System Architecture](#system-architecture)  
-7. [Setup & Deployment](#setup--deployment)  
-8. [Usage Instructions](#usage-instructions)  
-9. [Customization](#customization)  
-10. [Known Limitations](#known-limitations)  
-11. [Contributing](#contributing)  
-12. [License](#license)  
-13. [Contact](#contact)
+1. [Project Goal](#1-project-goal)  
+2. [Overview](#2-overview)  
+3. [Features](#3-features)  
+4. [Technology Stack](#4-technology-stack)  
+5. [Prerequisites](#5-prerequisites)  
+6. [System Architecture](#6-system-architecture)  
+7. [Setup & Deployment](#7-setup--deployment)  
+8. [Usage Instructions](#8-usage-instructions)  
+9. [Customization](#9-customization)  
+10. [Known Limitations](#11-known-limitations)  
+11. [Contributing](#12-contributing)  
+12. [License](#13-license)  
+13. [Contact](#14-contact)
 
 ---
 
