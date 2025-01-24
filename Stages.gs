@@ -62,3 +62,14 @@ function getProductionStages() {
     return { stages: {}, order: [] }; // Return an empty structure on error
   }
 }
+/**
+ * Test function to log production stages for debugging.
+ */
+function testGetProductionStages() {
+  try {
+    const stagesData = getProductionStages();
+    Logger.log(`Stages Data: ${JSON.stringify(stagesData, null, 2)}`);
+  } catch (error) {
+    Logger.log(`Error testing getProductionStages: ${error.message}`);
+  }
+}
