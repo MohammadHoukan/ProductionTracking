@@ -14,10 +14,10 @@ An inclusive solution using **Google Apps Script** and **Google Sheets** to stre
 7. [Setup & Deployment](#7-setup--deployment)  
 8. [Usage Instructions](#8-usage-instructions)  
 9. [Customization](#9-customization)  
-10. [Known Limitations](#11-known-limitations)  
-11. [Contributing](#12-contributing)  
-12. [License](#13-license)  
-13. [Contact](#14-contact)
+10. [Known Limitations](#10-known-limitations)  
+11. [Contributing](#11-contributing)  
+12. [License](#12-license)  
+13. [Contact](#13-contact)
 
 ---
 
