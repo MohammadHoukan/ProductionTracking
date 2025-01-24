@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Production Tracking System</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+  <style>
+    :root {
+      --main-border-color: #333;
+      --main-bg-color: #f7f7f7;
+      --sub-stage-bg-color: #ffffff;
+      --draggable-bg-color: #708090;
+      --text-color: #fff;
+    }
+
+    .main-stage, .sub-stage {
+      min-width: 200px;
+      min-height: 100px;
+      max-height: 400px;
+      border: 1px solid var(--main-border-color);
+      background-color: var(--main-bg-color);
+      margin: 5px;
+      display: inline-block;
+      vertical-align: top;
+      padding: 5px;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+
+    .sub-stage {
+      border-style: dashed;
+      background-color: var(--sub-stage-bg-color);
+    }
+
+    .draggable {
+      margin: 10px 0;
+      padding: 5px;
+      background-color: var(--draggable-bg-color);
+      cursor: move;
+      border-radius: 5px;
+      color: var(--text-color);
+    }
+
+    .drop-target {
+      background-color: #d3ffd3;
+      border: 2px dashed #4caf50;
+    }
+
+    .stages-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+    }
+
+    .search-container {
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <button id="printButton"><i class="fa fa-print"></i> Print Sheet</button>
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="Search..." aria-label="Search items">
+  </div>
+  <div class="stages-container"></div>
+
+  <script>
+    window.onload = () => {
+      document.getElementById('printButton').addEventListener('click', printSheet);
+      document.getElementById('searchInput').addEventListener('keyup', searchItems);
+      loadStages();
+      loadItems();
+    };
+
+function loadStages() {
+      google.script.run.withSuccessHandler(renderStages).getProductionStages();
+    }
+
+    function renderStages(data) {
+      const { stages, order } = data;
+      const stagesContainer = document.querySelector('.stages-container');
+      stagesContainer.innerHTML = ''; // Clear existing content
+
+      order.forEach(mainStage => {
+        const mainDiv = document.createElement('div');
+        mainDiv.className = 'main-stage';
+        mainDiv.id = mainStage;
+
+        const title = document.createElement('h3');
+        title.textContent = mainStage;
+        mainDiv.appendChild(title);
+
+        stages[mainStage].forEach(subStage => {
+          const subDiv = document.createElement('div');
+          subDiv.className = 'sub-stage';
+          subDiv.id = `${mainStage}-${subStage}`;
+          subDiv.textContent = subStage;
+
+          subDiv.ondragover = event => event.preventDefault();
+          subDiv.ondrop = event => handleDrop(event);
+
+          mainDiv.appendChild(subDiv);
+        });
+
+        mainDiv.ondragover = event => event.preventDefault();
+        mainDiv.ondrop = event => handleDrop(event);
+
+        stagesContainer.appendChild(mainDiv);
+      });
+    }
+
+    function loadItems() {
+      google.script.run.withSuccessHandler(renderItems).fetchOrders();
+    }
+
+    function renderItems(items) {
+      items.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'draggable';
+        itemDiv.draggable = true;
+        itemDiv.id = item.id;
+
+        itemDiv.ondragstart = event => handleDragStart(event);
+
+        const description = document.createElement('p');
+        description.textContent = `${item.description} (${item.id})`;
+        itemDiv.appendChild(description);
+
+        const dates = document.createElement('p');
+        dates.textContent = `Received: ${item.dateReceived}, Delivery: ${item.deliveryDate}`;
+        itemDiv.appendChild(dates);
+
+        const targetStage = document.getElementById(item.status) || document.getElementById('Unassigned');
+        if (targetStage) {
+          targetStage.appendChild(itemDiv);
+        }
+      });
+      
+    }
+
+    function handleDragStart(event) {
+      event.dataTransfer.setData('text/plain', event.target.id);
+    }
+
+function handleDrop(event) {
+  event.preventDefault();
+
+  // Get the dragged item's ID and normalize it to a string
+  const itemId = event.dataTransfer.getData('text/plain').toString();
+  const draggedElement = document.getElementById(itemId);
+
+  if (!draggedElement) {
+    console.warn(`Dragged element with ID ${itemId} not found.`);
+    return;
+  }
+
+  // Traverse the DOM to find a valid drop target (main-stage or sub-stage)
+  let dropTarget = event.target;
+  while (
+    dropTarget &&
+    !dropTarget.classList.contains('main-stage') &&
+    !dropTarget.classList.contains('sub-stage')
+  ) {
+    dropTarget = dropTarget.parentElement;
+  }
+
+  if (dropTarget) {
+    // Append the dragged item to the valid drop target
+    dropTarget.appendChild(draggedElement);
+
+    console.log(`Moved item ID: ${itemId} to target ID: ${dropTarget.id}`);
+
+    // Call the backend to update the order's status in the sheet
+    google.script.run
+      .withSuccessHandler(() =>
+        console.log(`Successfully updated status of ${itemId} to ${dropTarget.id}`)
+      )
+      .withFailureHandler(err =>
+        console.error(`Failed to update status of ${itemId}: ${err.message}`)
+      )
+      .updateOrderStatus(itemId, dropTarget.id);
+  } else {
+    console.warn(`Invalid drop target for item ID: ${itemId}`);
+  }
+}
+
+
+    function searchItems() {
+      const input = document.getElementById('searchInput');
+      const filter = input.value.toUpperCase();
+      const items = document.getElementsByClassName('draggable');
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const text = item.textContent || item.innerText;
+        if (text.toUpperCase().includes(filter)) {
+          item.style.display = '';
+        } else {
+          item.style.display = 'none';
+        }
+      }
+    }
+
+    function printSheet() {
+      google.script.run.withSuccessHandler(data => {
+        const printableWindow = window.open('', '_blank');
+        printableWindow.document.write('<html><head><title>Production Report</title></head><body>');
+        printableWindow.document.write('<h2>Production Status</h2><table border="1">');
+        printableWindow.document.write('<tr><th>ID</th><th>Status</th><th>Description</th><th>Received</th><th>Delivery</th></tr>');
+        data.forEach(row => {
+          printableWindow.document.write('<tr>');
+          row.forEach(cell => printableWindow.document.write(`<td>${cell}</td>`));
+          printableWindow.document.write('</tr>');
+        });
+        printableWindow.document.write('</table></body></html>');
+        printableWindow.document.close();
+        printableWindow.print();
+      }).getPrintableData();
+    }
+  </script>
+</body>
+</html>
