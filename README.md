@@ -205,7 +205,8 @@ You should have received a copy of the GNU General Public License along with thi
 
 - **Maintainer**: Mohammad Houkan  
 - **Email**: mh1208170@gmail.com
-- 
+  
+
 Should you encounter any issues or have suggestions for improvement, please open a GitHub issue or contact us directly.
 
 ---
