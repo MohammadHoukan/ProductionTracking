@@ -15,8 +15,8 @@
 
     .main-stage, .sub-stage {
       min-width: 200px;
-      min-height: 100px;
-      max-height: 400px;
+      min-height: 200px;
+      max-height: 800px;
       border: 1px solid var(--main-border-color);
       background-color: var(--main-bg-color);
       margin: 5px;
@@ -25,7 +25,13 @@
       padding: 5px;
       box-sizing: border-box;
       overflow-y: auto;
+      overflow-x: hidden; /* Prevent horizontal scrolling */
+
     }
+    .main-stage {
+  flex: 1 1 calc(25% - 10px); /* Adjust to fit 4 main stages per row */
+  max-width: calc(25% - 10px); /* Ensure proper spacing */
+}
 
     .sub-stage {
       border-style: dashed;
@@ -52,73 +58,101 @@
       justify-content: flex-start;
     }
 
-    .search-container {
+    .controls {
       margin: 10px;
+    }
+
+    button {
+      margin-right: 10px;
+      padding: 10px 15px;
+      font-size: 14px;
+      background-color: #4caf50;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
     }
   </style>
 </head>
 <body>
-  <button id="printButton"><i class="fa fa-print"></i> Print Sheet</button>
+  <div class="controls">
+    <button id="printButton"><i class="fa fa-print"></i> Print Sheet</button>
+    <button id="reloadOrdersButton"><i class="fa fa-sync"></i> Reload Orders</button>
+    <button id="reloadStagesButton"><i class="fa fa-sync"></i> Reload Stages</button>
+  </div>
   <div class="search-container">
     <input type="text" id="searchInput" placeholder="Search..." aria-label="Search items">
   </div>
   <div class="stages-container"></div>
 
   <script>
+    // Initial loading of stages and orders
     window.onload = () => {
       document.getElementById('printButton').addEventListener('click', printSheet);
+      document.getElementById('reloadOrdersButton').addEventListener('click', reloadOrders);
+      document.getElementById('reloadStagesButton').addEventListener('click', reloadStages);
       document.getElementById('searchInput').addEventListener('keyup', searchItems);
       loadStages();
       loadItems();
     };
 
-function loadStages() {
+    // Load stages
+    function loadStages() {
       google.script.run.withSuccessHandler(renderStages).getProductionStages();
     }
 
+    // Render stages
     function renderStages(data) {
-      const { stages, order } = data;
-      const stagesContainer = document.querySelector('.stages-container');
-      stagesContainer.innerHTML = ''; // Clear existing content
+  const { stages, order } = data;
+  const stagesContainer = document.querySelector('.stages-container');
+  stagesContainer.innerHTML = ''; // Clear existing content
 
-      order.forEach(mainStage => {
-        const mainDiv = document.createElement('div');
-        mainDiv.className = 'main-stage';
-        mainDiv.id = mainStage;
+  order.forEach(mainStage => {
+    const mainDiv = document.createElement('div');
+    mainDiv.className = 'main-stage';
+    mainDiv.id = mainStage;
 
-        const title = document.createElement('h3');
-        title.textContent = mainStage;
-        mainDiv.appendChild(title);
+    const title = document.createElement('h3');
+    title.textContent = mainStage;
+    mainDiv.appendChild(title);
 
-        stages[mainStage].forEach(subStage => {
-          const subDiv = document.createElement('div');
-          subDiv.className = 'sub-stage';
-          subDiv.id = `${mainStage}-${subStage}`;
-          subDiv.textContent = subStage;
+    stages[mainStage].forEach(subStage => {
+      const subDiv = document.createElement('div');
+      subDiv.className = 'sub-stage';
+      subDiv.id = `${mainStage}-${subStage}`;
+      subDiv.textContent = subStage;
 
-          subDiv.ondragover = event => event.preventDefault();
-          subDiv.ondrop = event => handleDrop(event);
+      subDiv.ondragover = event => event.preventDefault();
+      subDiv.ondrop = event => handleDrop(event);
 
-          mainDiv.appendChild(subDiv);
-        });
+      mainDiv.appendChild(subDiv);
+    });
 
-        mainDiv.ondragover = event => event.preventDefault();
-        mainDiv.ondrop = event => handleDrop(event);
+    mainDiv.ondragover = event => event.preventDefault();
+    mainDiv.ondrop = event => handleDrop(event);
 
-        stagesContainer.appendChild(mainDiv);
-      });
-    }
+    stagesContainer.appendChild(mainDiv);
+  });
+}
 
+
+    // Load items
     function loadItems() {
       google.script.run.withSuccessHandler(renderItems).fetchOrders();
     }
 
+    // Render items
     function renderItems(items) {
       items.forEach(item => {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'draggable';
         itemDiv.draggable = true;
         itemDiv.id = item.id;
+        itemDiv.style.display = 'block'; // Ensure items are visible
 
         itemDiv.ondragstart = event => handleDragStart(event);
 
@@ -135,56 +169,62 @@ function loadStages() {
           targetStage.appendChild(itemDiv);
         }
       });
-      
     }
 
+  function reloadOrders() {
+    console.log('Reloading orders...');
+
+    // Select and remove all draggable items without affecting structure
+    const draggableItems = document.querySelectorAll('.draggable');
+    draggableItems.forEach(item => item.remove()); // Remove each draggable item
+
+    // Reload items into their appropriate stages
+    loadItems();
+  }
+
+
+
+    function reloadStages() {
+      console.log('Reloading stages...');
+      const stagesContainer = document.querySelector('.stages-container');
+      stagesContainer.innerHTML = ''; // Clear all stages and items
+      loadStages();
+      loadItems(); // Reload items after reloading stages
+    }
+
+
+    // Drag-and-drop functionality
     function handleDragStart(event) {
       event.dataTransfer.setData('text/plain', event.target.id);
     }
 
-function handleDrop(event) {
-  event.preventDefault();
+    function handleDrop(event) {
+      event.preventDefault();
+      const itemId = event.dataTransfer.getData('text/plain').toString();
+      const draggedElement = document.getElementById(itemId);
 
-  // Get the dragged item's ID and normalize it to a string
-  const itemId = event.dataTransfer.getData('text/plain').toString();
-  const draggedElement = document.getElementById(itemId);
+      if (!draggedElement) {
+        console.warn(`Dragged element with ID ${itemId} not found.`);
+        return;
+      }
 
-  if (!draggedElement) {
-    console.warn(`Dragged element with ID ${itemId} not found.`);
-    return;
-  }
+      let dropTarget = event.target;
+      while (dropTarget && !dropTarget.classList.contains('main-stage') && !dropTarget.classList.contains('sub-stage')) {
+        dropTarget = dropTarget.parentElement;
+      }
 
-  // Traverse the DOM to find a valid drop target (main-stage or sub-stage)
-  let dropTarget = event.target;
-  while (
-    dropTarget &&
-    !dropTarget.classList.contains('main-stage') &&
-    !dropTarget.classList.contains('sub-stage')
-  ) {
-    dropTarget = dropTarget.parentElement;
-  }
+      if (dropTarget) {
+        dropTarget.appendChild(draggedElement);
+        google.script.run
+          .withSuccessHandler(() => console.log(`Successfully updated status of ${itemId} to ${dropTarget.id}`))
+          .withFailureHandler(err => console.error(`Failed to update status of ${itemId}: ${err.message}`))
+          .updateOrderStatus(itemId, dropTarget.id);
+      } else {
+        console.warn(`Invalid drop target for item ID: ${itemId}`);
+      }
+    }
 
-  if (dropTarget) {
-    // Append the dragged item to the valid drop target
-    dropTarget.appendChild(draggedElement);
-
-    console.log(`Moved item ID: ${itemId} to target ID: ${dropTarget.id}`);
-
-    // Call the backend to update the order's status in the sheet
-    google.script.run
-      .withSuccessHandler(() =>
-        console.log(`Successfully updated status of ${itemId} to ${dropTarget.id}`)
-      )
-      .withFailureHandler(err =>
-        console.error(`Failed to update status of ${itemId}: ${err.message}`)
-      )
-      .updateOrderStatus(itemId, dropTarget.id);
-  } else {
-    console.warn(`Invalid drop target for item ID: ${itemId}`);
-  }
-}
-
-
+    // Search functionality
     function searchItems() {
       const input = document.getElementById('searchInput');
       const filter = input.value.toUpperCase();
@@ -201,6 +241,7 @@ function handleDrop(event) {
       }
     }
 
+    // Print functionality
     function printSheet() {
       google.script.run.withSuccessHandler(data => {
         const printableWindow = window.open('', '_blank');
