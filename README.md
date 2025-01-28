@@ -1,7 +1,7 @@
 # 🏢 Factory Production Tracking System
 
 An inclusive solution using **📄 Google Apps Script** and **📃 Google Sheets** to streamline factory floor operations. By employing an intuitive 🔧 drag-and-drop interface and visual cues, this system empowers workers of varying technical skill levels to track and update production orders in real time.  
-
+use here:https://script.google.com/macros/s/AKfycbxrrHJM3ZD3aLXWcbkSysDvme5FTGVbWLN10NoltXRslgSvdZrLmQVqHBu65vtjIRChYg/exec
 ---
 
 ## 1. Project Goal
