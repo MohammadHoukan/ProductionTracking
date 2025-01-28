@@ -1,5 +1,6 @@
 /**
  * Fetches all production stages and sub-stages from the "Stages" sheet.
+ * Dynamically handles new or updated stages and logs skipped rows.
  * @return {Object} An object containing main stages and their sub-stages.
  * @example
  * {
@@ -21,37 +22,36 @@ function getProductionStages() {
     }
 
     const lastRow = sheet.getLastRow();
-    if (lastRow < 2) { // Check if there's any data beyond the header
+    if (lastRow < 2) { // No data beyond the header
       Logger.log(`No stages found in the "${sheetName}" sheet.`);
       return { stages: {}, order: [] };
     }
 
-    // Fetch only the necessary columns and rows (Assume 2 columns: Main Stage, Sub Stage)
-    const dataRange = sheet.getRange(2, 1, lastRow - 1, 2);
+    // Fetch only necessary rows and columns (starting from row 2)
+    const dataRange = sheet.getRange(2, 1, lastRow - 1, 2); // Columns: Main Stage, Sub Stage
     const data = dataRange.getValues();
 
-    // Constants for column indices (1-based indexing)
-    const MAIN_STAGE_COL = 0;
-    const SUB_STAGE_COL = 1;
-
+    // Initialize structures
     const stages = {};
     const order = [];
 
     data.forEach((row, index) => {
-      const mainStage = row[MAIN_STAGE_COL]?.trim(); // Trim whitespace
-      const subStage = row[SUB_STAGE_COL]?.trim();
+      const mainStage = row[0]?.trim(); // Column 1: Main Stage
+      const subStage = row[1]?.trim(); // Column 2: Sub Stage
 
+      // Skip rows with missing data
       if (!mainStage || !subStage) {
         Logger.log(`Skipping invalid row ${index + 2}: ${JSON.stringify(row)}`);
-        return; // Skip rows with missing data
+        return;
       }
 
       // Add main stage if it doesn't exist
       if (!stages[mainStage]) {
         stages[mainStage] = [];
-        order.push(mainStage); // Maintain the order of main stages
+        order.push(mainStage); // Maintain order of main stages
       }
 
+      // Add sub-stage
       stages[mainStage].push(subStage);
     });
 
@@ -59,12 +59,10 @@ function getProductionStages() {
 
   } catch (error) {
     Logger.log(`Error in getProductionStages: ${error.message}`);
-    return { stages: {}, order: [] }; // Return an empty structure on error
+    return { stages: {}, order: [] }; // Return empty structure on error
   }
 }
-/**
- * Test function to log production stages for debugging.
- */
+
 function testGetProductionStages() {
   try {
     const stagesData = getProductionStages();
