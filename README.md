@@ -178,8 +178,8 @@ This design is flexible and can be easily adapted to various production workflow
    - Drag an order to a new stage to reflect its progress. The system automatically updates the spreadsheet.  
 3. **🔎 Search Bar**  
    - Enter a PO number, WO number, or keyword from the description. Items that match are highlighted; all others appear dimmed.  
-4. **📃 Reporting**  
-   - Use the **Print** button to open a printable page summarizing relevant orders, which can then be printed or saved.
+4. **📃 Reporting**
+   - Use the **Print** button to generate a summary table of orders. The button calls the `getPrintableData()` function on the server to retrieve the latest data before opening the printable view.
 
 ---
 
@@ -195,14 +195,6 @@ This design is flexible and can be easily adapted to various production workflow
   - If new columns are added to the main sheet, update the associated indexing in the script.
 
 ---
-
-## 📝 Known Limitations
-
-- **🔹 Google Apps Script Quotas**  
-  - Large-scale factories with thousands of orders may approach daily execution or time quotas.  
-- **🚫 Offline Access**  
-  - Requires internet connectivity to interact with Google Sheets and the script.  
-
 
 ## 10. Known Limitations
 
