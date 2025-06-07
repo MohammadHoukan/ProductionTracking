@@ -3,15 +3,6 @@
  * @return {Array} An array of order objects.
  * @example
  * [
- *   { id: '12345', description: 'Wardrobe', dateReceived: '01-01-2025', deliveryDate: '15-01-2025', status: 'Cutting', comments: 'Urgent' },
- *   { id: '67890', description: 'Table', dateReceived: '02-01-2025', deliveryDate: '20-01-2025', status: 'Assembling', comments: 'Check quality' }
- * ]
- */
-/**
- * Fetches all production orders and their statuses from the "Orders" sheet.
- * @return {Array} An array of order objects.
- * @example
- * [
  *   {
  *     id: '123',
  *     description: 'Wardrobe Unit',
@@ -116,6 +107,41 @@ function updateOrderStatus(itemId, newStatus) {
   } catch (error) {
     Logger.log(`Error in updateOrderStatus: ${error.message}`);
     throw error;
+  }
+}
+
+/**
+ * Returns simplified order data used for the printable report.
+ * @return {Array<Array<string>>} Array of rows for printing.
+ */
+function getPrintableData() {
+  try {
+    const spreadsheetId = getSpreadsheetId();
+    const sheetName = 'Orders';
+    const sheet = SpreadsheetApp.openById(spreadsheetId).getSheetByName(sheetName);
+
+    if (!sheet) {
+      throw new Error(`The "${sheetName}" sheet was not found.`);
+    }
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      return [];
+    }
+
+    const range = sheet.getRange(2, 1, lastRow - 1, 5); // ID, Description, Received, Delivery, Status
+    const values = range.getValues();
+
+    return values.map(row => [
+      row[0], // ID
+      row[4], // Status
+      row[1], // Description
+      formatDate(row[2]), // Date Received
+      formatDate(row[3]), // Delivery Date
+    ]);
+  } catch (error) {
+    Logger.log(`Error in getPrintableData: ${error.message}`);
+    return [];
   }
 }
 
